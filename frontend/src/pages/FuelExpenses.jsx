@@ -14,9 +14,12 @@ const FUEL_PRICES = {
 
 const emptyForm = { vehicleId: '', liters: '', fuelCost: '', maintenanceCost: '0', kmDriven: '', notes: '', detectedFuelType: '' };
 
+const inputCls = "w-full bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all";
+const selectCls = "w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all";
+
 function Modal({ vehicles, onClose, onSave }) {
     const [form, setForm] = useState(emptyForm);
-    const [autoPrice, setAutoPrice] = useState(null); // detected price/L
+    const [autoPrice, setAutoPrice] = useState(null);
 
     const selectedVehicle = vehicles.find(v => v._id === form.vehicleId);
 
@@ -42,18 +45,22 @@ function Modal({ vehicles, onClose, onSave }) {
         ? (parseFloat(form.kmDriven) / parseFloat(form.liters)).toFixed(2) : null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl fade-in max-h-screen overflow-y-auto">
-                <div className="flex items-center justify-between p-5 border-b border-slate-700 sticky top-0 bg-slate-800 z-10">
-                    <h2 className="text-white font-semibold text-lg">Add Fuel / Expense Log</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-gray-100 rounded-2xl w-full max-w-lg shadow-2xl shadow-gray-200/80 fade-in max-h-screen overflow-y-auto">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-2xl">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center shadow-sm">
+                            <Fuel size={16} className="text-white" />
+                        </div>
+                        <h2 className="text-gray-800 font-semibold text-lg">Add Fuel / Expense Log</h2>
+                    </div>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-all"><X size={18} /></button>
                 </div>
-                <div className="p-5 space-y-4">
 
+                <div className="p-6 space-y-4">
                     <div>
-                        <label className="text-slate-300 text-sm block mb-1.5">Vehicle*</label>
-                        <select value={form.vehicleId} onChange={f('vehicleId')}
-                            className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+                        <label className="text-gray-600 text-xs font-semibold uppercase tracking-wider block mb-1.5">Vehicle*</label>
+                        <select value={form.vehicleId} onChange={f('vehicleId')} className={selectCls}>
                             <option value="">Select Vehicle</option>
                             {vehicles.map(v => <option key={v._id} value={v._id}>{v.name} — {v.licensePlate} ({v.fuelType || 'Diesel'})</option>)}
                         </select>
@@ -61,70 +68,64 @@ function Modal({ vehicles, onClose, onSave }) {
 
                     {/* Auto-price banner */}
                     {selectedVehicle && autoPrice && (
-                        <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-3 py-2 text-xs">
-                            <Fuel size={13} className="text-indigo-400 flex-shrink-0" />
-                            <span className="text-indigo-300">
-                                <strong>{selectedVehicle.fuelType || 'Diesel'}</strong> detected → Current price:
-                                <strong className="text-indigo-200"> ₹{autoPrice}/liter</strong> · Fuel cost auto-calculated from liters
+                        <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2 text-xs">
+                            <Fuel size={13} className="text-indigo-500 flex-shrink-0" />
+                            <span className="text-gray-600">
+                                <strong className="text-indigo-700">{selectedVehicle.fuelType || 'Diesel'}</strong> detected → Current price:
+                                <strong className="text-indigo-700"> ₹{autoPrice}/liter</strong> · Fuel cost auto-calculated from liters
                             </span>
                         </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-slate-300 text-sm block mb-1.5">Liters*</label>
-                            <input type="number" value={form.liters} onChange={f('liters')} min="0" step="0.1"
-                                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500" />
+                            <label className="text-gray-600 text-xs font-semibold uppercase tracking-wider block mb-1.5">Liters*</label>
+                            <input type="number" value={form.liters} onChange={f('liters')} min="0" step="0.1" className={inputCls} />
                         </div>
                         <div>
-                            <label className="text-slate-300 text-sm block mb-1.5">
-                                Fuel Cost (₹)
-                                {autoPrice && <span className="text-indigo-400 text-xs ml-1">(auto-calculated)</span>}
+                            <label className="text-gray-600 text-xs font-semibold uppercase tracking-wider block mb-1.5">
+                                Fuel Cost (₹) {autoPrice && <span className="text-indigo-500 normal-case font-normal ml-1">(auto)</span>}
                             </label>
-                            <input type="number" value={form.fuelCost} onChange={f('fuelCost')} min="0"
-                                className="w-full bg-slate-900 border border-indigo-500 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400" />
+                            <input type="number" value={form.fuelCost} onChange={f('fuelCost')} min="0" className={inputCls} />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-slate-300 text-sm block mb-1.5">KM Driven</label>
-                            <input type="number" value={form.kmDriven} onChange={f('kmDriven')} min="0"
-                                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500" />
+                            <label className="text-gray-600 text-xs font-semibold uppercase tracking-wider block mb-1.5">KM Driven</label>
+                            <input type="number" value={form.kmDriven} onChange={f('kmDriven')} min="0" className={inputCls} />
                         </div>
                         <div>
-                            <label className="text-slate-300 text-sm block mb-1.5">Maintenance Cost (₹)</label>
-                            <input type="number" value={form.maintenanceCost} onChange={f('maintenanceCost')} min="0"
-                                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500" />
+                            <label className="text-gray-600 text-xs font-semibold uppercase tracking-wider block mb-1.5">Maint. Cost (₹)</label>
+                            <input type="number" value={form.maintenanceCost} onChange={f('maintenanceCost')} min="0" className={inputCls} />
                         </div>
                     </div>
 
                     <div>
-                        <label className="text-slate-300 text-sm block mb-1.5">Notes</label>
-                        <input value={form.notes} onChange={f('notes')} placeholder="Optional notes"
-                            className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500" />
+                        <label className="text-gray-600 text-xs font-semibold uppercase tracking-wider block mb-1.5">Notes</label>
+                        <input value={form.notes} onChange={f('notes')} placeholder="Optional notes" className={inputCls} />
                     </div>
 
                     {/* Summary */}
-                    <div className="bg-slate-900 rounded-xl p-4 grid grid-cols-3 gap-3 text-sm">
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 grid grid-cols-3 gap-3 text-sm">
                         <div className="text-center">
-                            <p className="text-slate-500 text-xs">Fuel Cost</p>
-                            <p className="text-orange-400 font-semibold">₹{(parseFloat(form.fuelCost) || 0).toLocaleString()}</p>
+                            <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Fuel Cost</p>
+                            <p className="text-orange-500 font-bold text-base mt-0.5">₹{(parseFloat(form.fuelCost) || 0).toLocaleString()}</p>
                         </div>
-                        <div className="text-center border-x border-slate-700">
-                            <p className="text-slate-500 text-xs">Total Cost</p>
-                            <p className="text-white font-bold">₹{totalCost.toLocaleString()}</p>
+                        <div className="text-center border-x border-gray-200">
+                            <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Total Cost</p>
+                            <p className="text-gray-800 font-bold text-base mt-0.5">₹{totalCost.toLocaleString()}</p>
                         </div>
                         <div className="text-center">
-                            <p className="text-slate-500 text-xs">Efficiency</p>
-                            <p className="text-green-400 font-semibold">{efficiency ? `${efficiency} km/L` : '—'}</p>
+                            <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">Efficiency</p>
+                            <p className="text-green-600 font-bold text-base mt-0.5">{efficiency ? `${efficiency} km/L` : '—'}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex gap-3 p-5 border-t border-slate-700 justify-end">
-                    <button onClick={onClose} className="px-4 py-2 text-sm text-slate-300 border border-slate-600 rounded-lg hover:text-white">Cancel</button>
-                    <button onClick={() => onSave(form)} className="px-5 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors">Save Log</button>
+                <div className="flex gap-3 px-6 py-4 border-t border-gray-100 justify-end bg-gray-50 rounded-b-2xl">
+                    <button onClick={onClose} className="px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-white transition-all">Cancel</button>
+                    <button onClick={() => onSave(form)} className="px-5 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow shadow-indigo-200">Save Log</button>
                 </div>
             </div>
         </div>
@@ -158,77 +159,97 @@ export default function FuelExpenses() {
     }), { fuel: 0, maintenance: 0, total: 0, liters: 0 });
 
     return (
-        <div className="space-y-5">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Fuel & Expenses</h1>
-                    <p className="text-slate-400 text-sm mt-0.5">{logs.length} expense records</p>
+        <div className="space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 bg-orange-500 rounded-2xl flex items-center justify-center shadow-md shadow-orange-200">
+                        <Fuel size={20} className="text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Fuel & Expenses</h1>
+                        <p className="text-gray-400 text-sm">{logs.length} expense records</p>
+                    </div>
                 </div>
-                <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                <button onClick={() => setShowModal(true)}
+                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow shadow-indigo-200">
                     <Plus size={16} /> Add Log
                 </button>
             </div>
 
             {/* Fuel price reference */}
-            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Current Fuel Prices (Auto-Applied)</p>
-                <div className="flex flex-wrap gap-4">
+            <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-5">
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-3">Current Fuel Prices (Auto-Applied)</p>
+                <div className="flex flex-wrap gap-5">
                     {Object.entries(FUEL_PRICES).map(([type, price]) => (
-                        <div key={type} className="flex items-center gap-2">
-                            <Fuel size={13} className="text-orange-400" />
-                            <span className="text-slate-300 text-sm">{type}:</span>
-                            <span className="text-orange-400 font-semibold text-sm">₹{price}/L</span>
+                        <div key={type} className="flex items-center gap-2 bg-orange-50/50 px-3 py-1.5 rounded-lg border border-orange-100">
+                            <Fuel size={14} className="text-orange-500" />
+                            <span className="text-gray-600 text-sm font-medium">{type}:</span>
+                            <span className="text-orange-600 font-bold text-sm">₹{price}/L</span>
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* Summary cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: 'Total Fuel Cost', value: `₹${totals.fuel.toLocaleString()}`, color: 'text-orange-400' },
-                    { label: 'Total Maintenance', value: `₹${totals.maintenance.toLocaleString()}`, color: 'text-amber-400' },
-                    { label: 'Total Expenses', value: `₹${totals.total.toLocaleString()}`, color: 'text-red-400' },
-                    { label: 'Total Fuel (L)', value: `${totals.liters.toFixed(1)}L`, color: 'text-blue-400' },
-                ].map(({ label, value, color }) => (
-                    <div key={label} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-                        <p className="text-slate-400 text-xs">{label}</p>
-                        <p className={`${color} text-xl font-bold mt-1`}>{value}</p>
+                    { label: 'Total Fuel Cost', value: `₹${totals.fuel.toLocaleString()}`, color: 'text-orange-600', bg: 'bg-orange-50' },
+                    { label: 'Total Maintenance', value: `₹${totals.maintenance.toLocaleString()}`, color: 'text-amber-600', bg: 'bg-amber-50' },
+                    { label: 'Total Expenses', value: `₹${totals.total.toLocaleString()}`, color: 'text-red-500', bg: 'bg-red-50' },
+                    { label: 'Total Fuel (L)', value: `${totals.liters.toFixed(1)}L`, color: 'text-blue-500', bg: 'bg-blue-50' },
+                ].map(({ label, value, color, bg }) => (
+                    <div key={label} className="bg-white border border-gray-100 shadow-sm rounded-2xl p-5">
+                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-2">{label}</p>
+                        <div className="flex items-end gap-2">
+                            <div className={`w-1.5 h-6 rounded-full ${bg} overflow-hidden`}><div className={`h-full w-full ${color.replace('text-', 'bg-')}`}></div></div>
+                            <p className={`${color} text-2xl font-bold leading-none`}>{value}</p>
+                        </div>
                     </div>
                 ))}
             </div>
 
-            <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-max">
                         <thead>
-                            <tr className="border-b border-slate-700">
+                            <tr className="border-b border-gray-100 bg-gray-50">
                                 {['Vehicle', 'Liters', 'Fuel Cost', 'Maint.', 'Total', 'km/L', 'Date'].map(h => (
-                                    <th key={h} className="px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-left whitespace-nowrap">{h}</th>
+                                    <th key={h} className="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider text-left whitespace-nowrap">{h}</th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700/50">
-                            {logs.length === 0 && <tr><td colSpan={7} className="text-center text-slate-500 py-12">No fuel logs yet</td></tr>}
+                        <tbody className="divide-y divide-gray-50">
+                            {logs.length === 0 && (
+                                <tr><td colSpan={7} className="text-center py-14">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
+                                            <Fuel size={22} className="text-orange-400" />
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500">No fuel logs yet</p>
+                                    </div>
+                                </td></tr>
+                            )}
                             {logs.map(l => (
-                                <tr key={l._id} className="hover:bg-slate-700/30 transition-colors">
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <Fuel size={13} className="text-orange-400 flex-shrink-0" />
+                                <tr key={l._id} className="hover:bg-gray-50/80 transition-colors">
+                                    <td className="px-5 py-3.5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 bg-orange-50 border border-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <Fuel size={15} className="text-orange-500" />
+                                            </div>
                                             <div>
-                                                <p className="text-white text-sm font-medium whitespace-nowrap">{l.vehicleId?.name ?? '—'}</p>
-                                                <p className="text-slate-500 text-xs">{l.vehicleId?.licensePlate}</p>
+                                                <p className="text-gray-800 text-sm font-semibold whitespace-nowrap">{l.vehicleId?.name ?? '—'}</p>
+                                                <p className="text-gray-400 text-xs">{l.vehicleId?.licensePlate}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-slate-300 text-sm whitespace-nowrap">{l.liters}L</td>
-                                    <td className="px-4 py-3 text-slate-300 text-sm whitespace-nowrap">₹{l.fuelCost?.toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-slate-300 text-sm whitespace-nowrap">₹{l.maintenanceCost?.toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-white font-semibold text-sm whitespace-nowrap">₹{l.totalCost?.toLocaleString()}</td>
-                                    <td className="px-4 py-3">
-                                        {l.fuelEfficiency ? <span className="text-green-400 text-sm whitespace-nowrap">{l.fuelEfficiency}</span> : <span className="text-slate-600 text-sm">—</span>}
+                                    <td className="px-5 py-3.5 text-gray-700 font-medium text-sm whitespace-nowrap">{l.liters}L</td>
+                                    <td className="px-5 py-3.5 text-gray-600 text-sm whitespace-nowrap">₹{l.fuelCost?.toLocaleString()}</td>
+                                    <td className="px-5 py-3.5 text-gray-600 text-sm whitespace-nowrap">₹{l.maintenanceCost?.toLocaleString()}</td>
+                                    <td className="px-5 py-3.5 text-gray-800 font-bold text-sm whitespace-nowrap">₹{l.totalCost?.toLocaleString()}</td>
+                                    <td className="px-5 py-3.5">
+                                        {l.fuelEfficiency ? <span className="text-green-600 font-semibold text-sm whitespace-nowrap">{l.fuelEfficiency}</span> : <span className="text-gray-400 text-sm">—</span>}
                                     </td>
-                                    <td className="px-4 py-3 text-slate-400 text-sm whitespace-nowrap">{new Date(l.date).toLocaleDateString('en-IN')}</td>
+                                    <td className="px-5 py-3.5 text-gray-500 text-sm whitespace-nowrap">{new Date(l.date).toLocaleDateString('en-IN')}</td>
                                 </tr>
                             ))}
                         </tbody>
