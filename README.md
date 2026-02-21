@@ -1,11 +1,21 @@
-# FleetFlow 🚛 — Smart Fleet Management System
+# 🚛 FleetFlow 🚛 
 
-A modern, full-stack Fleet Management System built for hackathons.
+FleetFlow is a full-stack fleet management system designed to streamline vehicle tracking, driver coordination, and trip monitoring. It provides a centralized platform to manage fleet operations efficiently and improve overall productivity.
+
+# 📌 Overview #
+
+Managing fleet operations manually often results in:
+Inefficient vehicle tracking
+Poor route visibility
+Increased operational costs
+Data mismanagement
+
+FleetFlow addresses these challenges by offering a structured, scalable, and digital solution for fleet monitoring and management.
 
 ## Tech Stack
 - **Frontend:** React + Vite + Tailwind CSS + Chart.js
 - **Backend:** Node.js + Express.js
-- **Database:** MongoDB
+- **Database:** MongoDB,Mongoose
 
 ## Features
 - 🔐 Role-based login (Manager / Dispatcher / Driver)
