@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Zap, Truck, UserPlus, LogIn, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { CircleUser, Lock, Eye, EyeOff, Mail, Phone, Hash, ShieldAlert } from 'lucide-react';
 import api from '../api';
 
 const ROLES = ['Manager', 'Dispatcher', 'Driver', 'Safety Officer', 'Financial Analyst'];
@@ -11,8 +11,15 @@ export default function Login() {
     const [tab, setTab] = useState('login');
     const [loading, setLoading] = useState(false);
     const [showPass, setShowPass] = useState(false);
+
+    // Login
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPwd, setLoginPwd] = useState('');
+
+    // Auto-login helpers
+    const setDemo = (email, pwd) => { setLoginEmail(email); setLoginPwd(pwd); };
+
+    // Signup
     const [signupName, setSignupName] = useState('');
     const [signupEmail, setSignupEmail] = useState('');
     const [signupPwd, setSignupPwd] = useState('');
@@ -56,201 +63,171 @@ export default function Login() {
         } finally { setLoading(false); }
     };
 
-    const inputCls = "w-full bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all";
+    const inputClasses = "w-full bg-[#f6f6f6] text-gray-800 rounded-full pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#28094a]/20 transition-all font-medium placeholder-gray-500 text-sm";
 
     return (
-        <div className="min-h-screen w-full flex">
+        <div className="min-h-screen w-full relative flex overflow-hidden bg-white">
 
-            {/* ── LEFT PANEL ── Blue brand section */}
-            <div className="hidden lg:flex flex-col items-center justify-center w-1/2 bg-gradient-to-br from-blue-600 to-blue-700 p-14 relative overflow-hidden">
-                {/* Decorative circles */}
-                <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-56 h-56 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-                <div className="absolute top-1/3 left-1/4 w-40 h-40 bg-green-400/10 rounded-full blur-3xl pointer-events-none" />
+            {/* ── BACKGROUND ── */}
+            {/* Left Gradient Half */}
+            <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-br from-[#0c6ee2] to-[#1e0a44]" />
 
-                <div className="relative z-10 text-center">
-                    {/* Logo */}
-                    <div className="w-20 h-20 bg-white/15 rounded-3xl flex items-center justify-center mx-auto mb-7 border border-white/20 shadow-xl">
-                        <Zap size={38} className="text-white" strokeWidth={2} />
-                    </div>
-                    <h1 className="text-5xl font-extrabold text-white tracking-tight mb-3">FleetFlow</h1>
-                    <p className="text-blue-100 text-base mb-10 font-light">Smart Fleet Management System</p>
+            {/* Floating Decorative Elements (as in reference image) */}
+            {/* Top Right Mustard Circle */}
+            <div className="absolute top-[5%] right-[15%] w-10 h-10 bg-[#c8921a] rounded-full z-0" />
 
-                    {/* Feature cards */}
-                    <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
-                        {[
-                            { icon: '🚛', label: 'Live Tracking' },
-                            { icon: '📊', label: 'Analytics' },
-                            { icon: '🛡️', label: 'Safety Scores' },
-                            { icon: '💰', label: 'Finance Insights' },
-                        ].map(({ icon, label }) => (
-                            <div key={label} className="bg-white/10 border border-white/15 rounded-2xl px-3 py-4 text-center shadow-lg shadow-blue-900/20 hover:bg-white/15 transition-colors">
-                                <p className="text-2xl mb-1.5">{icon}</p>
-                                <p className="text-white text-xs font-semibold">{label}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+            {/* Middle Right Dark Purple Circle (cut off) */}
+            <div className="absolute top-[40%] -right-4 w-12 h-12 bg-[#28094a] rounded-full z-0" />
 
-            {/* ── RIGHT PANEL ── Login / Signup form, vertically centered */}
-            <div className="flex-1 flex items-center justify-center bg-gray-50 p-6 sm:p-12">
-                <div className="w-[80%] h-[70vh] overflow-y-auto flex flex-col justify-center bg-white rounded-3xl border border-gray-100 px-10 py-10"
-                    style={{ boxShadow: '0 8px 40px 0 rgba(0,0,0,0.18), 0 2px 8px 0 rgba(0,0,0,0.10)' }}>
+            {/* Bottom Right Mustard Circle (large, partially visible) */}
+            <div className="absolute -bottom-16 right-[3%] w-44 h-44 bg-[#c8921a] rounded-full z-0" />
 
-                    {/* Mobile brand (hidden on desktop) */}
-                    <div className="lg:hidden text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 mb-3 shadow-lg shadow-blue-200">
-                            <Zap size={24} className="text-white" strokeWidth={2.5} />
-                        </div>
-                        <h1 className="text-3xl font-extrabold text-gray-900">FleetFlow</h1>
-                        <p className="text-gray-400 text-sm mt-1">Smart Fleet Management</p>
-                    </div>
+            {/* Bottom Target/Ring Mustard Circle (middle) */}
+            <div className="absolute -bottom-16 left-[50%] -translate-x-1/2 w-32 h-32 border-[12px] border-[#c8921a] rounded-full z-10" />
 
-                    {/* Desktop heading */}
-                    <div className="hidden lg:block mb-8">
-                        <h2 className="text-4xl font-bold text-gray-900">Welcome back</h2>
-                        <p className="text-gray-400 mt-2 text-base">Sign in to your FleetFlow account</p>
-                    </div>
+            {/* Bottom Middle Small Dark Purple Hovering Circle */}
+            {/* ── CARD CONTAINER ── */}
+            <div className="relative z-30 flex-1 flex items-center justify-center p-6 lg:p-12">
+                <div className="bg-gradient-to-br from-[#1e0a44] to-[#0c6ee2] rounded-[2.5rem] p-10 sm:p-14 w-full max-w-[500px] border border-white/10"
+                    style={{ boxShadow: '0 25px 60px -10px rgba(0,0,0,0.5)' }}>
 
-                    {/* Tab switcher */}
-                    <div className="flex bg-gray-100 rounded-xl p-1.5 mb-8 shadow-inner">
-                        <button
-                            onClick={() => setTab('login')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-lg transition-all ${tab === 'login'
-                                ? 'bg-white text-blue-600 shadow-md shadow-gray-200/70'
-                                : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <LogIn size={16} /> Sign In
-                        </button>
-                        <button
-                            onClick={() => setTab('signup')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-lg transition-all ${tab === 'signup'
-                                ? 'bg-white text-green-600 shadow-md shadow-gray-200/70'
-                                : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <UserPlus size={16} /> Create Account
-                        </button>
-                    </div>
+                    {tab === 'login' ? (
+                        <>
+                            <h2 className="text-4xl font-extrabold text-white text-center mb-10">Welcome Back</h2>
 
-                    {/* ── LOGIN FORM ── */}
-                    {tab === 'login' && (
-                        <form onSubmit={handleLogin} className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Email Address</label>
-                                <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required
-                                    placeholder="you@example.com" className={inputCls} />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Password</label>
+                            <form onSubmit={handleLogin} className="space-y-5">
+                                {/* Email Field */}
                                 <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <CircleUser className="h-[1.25rem] w-[1.25rem] text-white/70" strokeWidth={1.5} />
+                                    </div>
+                                    <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required
+                                        placeholder="Username / Email"
+                                        className="w-full bg-white/10 text-white rounded-full pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium placeholder-white/50 text-base" />
+                                </div>
+
+                                {/* Password Field */}
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Lock className="h-[1.25rem] w-[1.25rem] text-white/70" strokeWidth={1.5} />
+                                    </div>
                                     <input type={showPass ? 'text' : 'password'} value={loginPwd} onChange={e => setLoginPwd(e.target.value)} required
-                                        placeholder="••••••••" className={inputCls + ' pr-12'} />
+                                        placeholder="Password"
+                                        className="w-full bg-white/10 text-white rounded-full pl-12 pr-12 py-3.5 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium placeholder-white/50 text-base" />
                                     <button type="button" onClick={() => setShowPass(!showPass)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                                        {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors focus:outline-none">
+                                        {showPass ? <Eye size={19} /> : <EyeOff size={19} />}
                                     </button>
                                 </div>
-                            </div>
 
-                            <button type="submit" disabled={loading}
-                                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] disabled:opacity-50 text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 text-base">
-                                {loading
-                                    ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    : <><Truck size={17} /> Sign In to FleetFlow</>}
-                            </button>
+                                {/* Checkbox & Forgot Password */}
+                                <div className="flex items-center justify-between px-2 pt-2 pb-4">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input type="checkbox" className="w-[16px] h-[16px] rounded bg-white/10 border border-white/30 appearance-none checked:bg-white checked:border-white transition-all relative
+                                            after:content-[''] after:absolute after:hidden checked:after:block after:left-[4px] after:top-[1px] after:w-[5px] after:h-[10px] after:border-r-2 after:border-b-2 after:border-[#1e0a44] after:rotate-45 block" />
+                                        <span className="text-sm font-medium text-white/80 group-hover:text-white">Remember Password</span>
+                                    </label>
+                                    <button type="button" className="text-sm font-semibold text-white/80 hover:text-white transition-colors focus:outline-none">Forgot Password</button>
+                                </div>
 
-                            <p className="text-center text-gray-400 text-sm">
-                                No account?{' '}
-                                <button type="button" onClick={() => setTab('signup')} className="text-blue-500 hover:text-blue-600 font-semibold">
-                                    Create one free <ChevronRight size={13} className="inline" />
+                                {/* Login Button */}
+                                <button type="submit" disabled={loading}
+                                    className="w-full bg-white hover:bg-gray-50 active:scale-[0.98] transition-all text-[#1e0a44] font-bold py-4 rounded-full text-base shadow-lg shadow-white/10 disabled:opacity-70 disabled:cursor-not-allowed">
+                                    {loading ? <span className="w-5 h-5 inline-block border-2 border-[#1e0a44]/30 border-t-[#1e0a44] rounded-full animate-spin" /> : 'Login'}
                                 </button>
+                            </form>
+
+                            <p className="text-center text-sm font-medium text-white/80 mt-8 mb-8">
+                                Don't Have an Account? <button onClick={() => setTab('signup')} className="font-bold text-white hover:text-blue-200 transition-colors focus:outline-none">Sign Up</button>
                             </p>
 
-                            {/* Demo accounts */}
-                            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 shadow-sm">
-                                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Demo Accounts</p>
-                                <div className="space-y-2.5">
+                            <div className="pt-6 border-t border-white/20">
+                                <p className="text-center text-xs font-semibold text-white/60 uppercase tracking-wider mb-4">Quick Demo Access</p>
+                                <div className="grid grid-cols-3 gap-2">
                                     {[
-                                        { label: 'Admin', email: 'admin@fleetflow.com', pwd: 'admin', dot: 'bg-blue-600' },
-                                        { label: 'Manager', email: 'nakshatragautam34@gmai.com', pwd: '123456', dot: 'bg-blue-400' },
-                                        { label: 'Dispatcher', email: 'dispatcher@fleetflow.com', pwd: 'dispatch123', dot: 'bg-green-500' },
-                                        { label: 'Driver', email: 'naks12@gmail.com', pwd: '123456', dot: 'bg-green-400' },
-                                        { label: 'Financial', email: 'financial@fleetflow.com', pwd: '123456', dot: 'bg-blue-300' },
-                                        { label: 'Safety Off.', email: 'safety@fleetflow.com', pwd: 'safety123', dot: 'bg-green-300' },
+                                        { label: 'Admin', email: 'admin@fleetflow.com', pwd: 'admin' },
+                                        { label: 'Manager', email: 'nakshatragautam34@gmai.com', pwd: '123456' },
+                                        { label: 'Dispatcher', email: 'dispatcher@fleetflow.com', pwd: 'dispatch123' },
+                                        { label: 'Driver', email: 'naks12@gmail.com', pwd: '123456' },
+                                        { label: 'Financial', email: 'financial@fleetflow.com', pwd: '123456' },
+                                        { label: 'Safety', email: 'safety@fleetflow.com', pwd: 'safety123' },
                                     ].map(acc => (
-                                        <button key={acc.label} type="button"
-                                            onClick={() => { setLoginEmail(acc.email); setLoginPwd(acc.pwd); }}
-                                            className="w-full flex items-center gap-3 bg-white hover:bg-blue-50 border border-gray-100 hover:border-blue-100 px-3.5 py-2.5 rounded-xl transition-all text-left group shadow-sm hover:shadow-md">
-                                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${acc.dot}`} />
-                                            <span className="text-gray-600 text-xs font-semibold w-20">{acc.label}</span>
-                                            <span className="text-gray-400 text-xs flex-1 truncate group-hover:text-gray-600 transition-colors">{acc.email}</span>
-                                            <ChevronRight size={12} className="text-gray-300 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
+                                        <button key={acc.label} type="button" onClick={() => setDemo(acc.email, acc.pwd)}
+                                            className="px-2 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-white text-xs font-medium focus:outline-none transition-all hover:scale-105 active:scale-95">
+                                            {acc.label}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                        </form>
-                    )}
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="text-3xl font-extrabold text-white text-center mb-8">Create Account</h2>
 
-                    {/* ── SIGNUP FORM ── */}
-                    {tab === 'signup' && (
-                        <form onSubmit={handleSignup} className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Name</label>
-                                <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} required placeholder="Rahul Kumar" className={inputCls} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</label>
-                                <input type="email" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} required placeholder="you@example.com" className={inputCls} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Password</label>
+                            <form onSubmit={handleSignup} className="space-y-4">
                                 <div className="relative">
-                                    <input type={showPass ? 'text' : 'password'} value={signupPwd} onChange={e => setSignupPwd(e.target.value)} required placeholder="Min 6 characters" className={inputCls + ' pr-12'} />
-                                    <button type="button" onClick={() => setShowPass(!showPass)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                                        {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <CircleUser className="h-[1.15rem] w-[1.15rem] text-white/70" strokeWidth={1.5} />
+                                    </div>
+                                    <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} required placeholder="Full Name"
+                                        className="w-full bg-white/10 text-white rounded-full pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium placeholder-white/50 text-sm" />
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Mail className="h-[1.15rem] w-[1.15rem] text-white/70" strokeWidth={1.5} />
+                                    </div>
+                                    <input type="email" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} required placeholder="Email Address"
+                                        className="w-full bg-white/10 text-white rounded-full pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium placeholder-white/50 text-sm" />
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Lock className="h-[1.15rem] w-[1.15rem] text-white/70" strokeWidth={1.5} />
+                                    </div>
+                                    <input type={showPass ? 'text' : 'password'} value={signupPwd} onChange={e => setSignupPwd(e.target.value)} required placeholder="Password"
+                                        className="w-full bg-white/10 text-white rounded-full pl-12 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium placeholder-white/50 text-sm" />
+                                    <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors focus:outline-none">
+                                        {showPass ? <Eye size={18} /> : <EyeOff size={18} />}
                                     </button>
                                 </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</label>
-                                    <select value={signupRole} onChange={e => setSignupRole(e.target.value)} className={inputCls}>
-                                        {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                                    </select>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="relative">
+                                        <select value={signupRole} onChange={e => setSignupRole(e.target.value)}
+                                            className="w-full bg-white/10 text-white rounded-full pl-4 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium text-sm appearance-none">
+                                            {ROLES.map(r => <option key={r} value={r} className="text-gray-900 bg-white shadow-lg">{r}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                            <Phone className="h-[1.1rem] w-[1.1rem] text-white/70" strokeWidth={1.5} />
+                                        </div>
+                                        <input type="tel" value={signupPhone} onChange={e => setSignupPhone(e.target.value)} placeholder="Phone"
+                                            className="w-full bg-white/10 text-white rounded-full pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium placeholder-white/50 text-sm" />
+                                    </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</label>
-                                    <input type="tel" value={signupPhone} onChange={e => setSignupPhone(e.target.value)} placeholder="+91 …" className={inputCls} />
-                                </div>
-                            </div>
 
-                            {signupRole === 'Driver' && (
-                                <div className="bg-green-50 border border-green-100 rounded-xl p-4 space-y-2.5 shadow-sm">
-                                    <p className="text-green-600 text-xs font-semibold">🪪 Driver License Details</p>
-                                    <input value={signupLicense} onChange={e => setSignupLicense(e.target.value)} required placeholder="License Number*"
-                                        className="w-full bg-white border border-green-200 text-gray-800 placeholder-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all" />
-                                    <input type="date" value={signupLicenseExpiry} onChange={e => setSignupLicenseExpiry(e.target.value)} required
-                                        className="w-full bg-white border border-green-200 text-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all" />
-                                </div>
-                            )}
+                                {signupRole === 'Driver' && (
+                                    <div className="bg-white/5 border border-white/20 rounded-3xl p-4 space-y-3">
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"><Hash className="h-[1.1rem] w-[1.1rem] text-white/70" /></div>
+                                            <input value={signupLicense} onChange={e => setSignupLicense(e.target.value)} required placeholder="License Number"
+                                                className="w-full bg-white/10 text-white rounded-full pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium placeholder-white/50 text-sm" />
+                                        </div>
+                                        <input type="date" value={signupLicenseExpiry} onChange={e => setSignupLicenseExpiry(e.target.value)} required
+                                            className="w-full bg-white/10 text-white rounded-full px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all font-medium placeholder-white/50 text-sm styled-date" />
+                                    </div>
+                                )}
 
-                            <button type="submit" disabled={loading}
-                                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 active:scale-[0.99] disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-green-200 text-sm">
-                                {loading
-                                    ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    : <><UserPlus size={15} /> Create My Account</>}
-                            </button>
-                            <p className="text-center text-gray-400 text-xs">
-                                Already registered?{' '}
-                                <button type="button" onClick={() => setTab('login')} className="text-blue-500 hover:text-blue-600 font-semibold">Sign in</button>
+                                <button type="submit" disabled={loading}
+                                    className="w-full bg-white hover:bg-gray-50 active:scale-[0.98] transition-all text-[#1e0a44] font-bold py-3.5 rounded-full text-base shadow-lg shadow-white/10 disabled:opacity-70 mt-6">
+                                    {loading ? <span className="w-5 h-5 inline-block border-2 border-[#1e0a44]/30 border-t-[#1e0a44] rounded-full animate-spin" /> : 'Create Account'}
+                                </button>
+                            </form>
+
+                            <p className="text-center text-sm font-medium text-white/80 mt-6">
+                                Already Registered? <button onClick={() => setTab('login')} className="font-bold text-white hover:text-blue-200 transition-colors focus:outline-none">Login</button>
                             </p>
-                        </form>
+                        </>
                     )}
-
-                    <p className="text-center text-gray-300 text-xs mt-8">FleetFlow v1.0 · Hackathon Edition 2026</p>
                 </div>
             </div>
         </div>
