@@ -174,6 +174,7 @@ export default function Trips() {
     const [vehicles, setVehicles] = useState([]);
     const [drivers, setDrivers] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [confirmCancelId, setConfirmCancelId] = useState(null); // inline confirm
 
     const load = async () => {
         const [t, v, d] = await Promise.all([api.get('/trips'), api.get('/vehicles'), api.get('/drivers')]);
@@ -203,12 +204,12 @@ export default function Trips() {
     };
 
     const cancel = async (id) => {
-        if (!window.confirm('Cancel this trip?')) return;
         try {
             await api.put(`/trips/${id}`, { status: 'Cancelled' });
             toast.success('Trip cancelled. Vehicle now Available.');
+            setConfirmCancelId(null);
             load();
-        } catch { toast.error('Cancel failed'); }
+        } catch (err) { toast.error(err.response?.data?.message || 'Cancel failed'); setConfirmCancelId(null); }
     };
 
     return (
@@ -265,14 +266,29 @@ export default function Trips() {
                                     </button>
                                 )}
                                 {(t.status === 'Draft' || t.status === 'Dispatched') && (
-                                    <button
-                                        onClick={() => cancel(t._id)}
-                                        className="flex items-center gap-1.5 bg-red-600/10 hover:bg-red-600/30 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                                    >
-                                        <XCircle size={13} /> Cancel
-                                    </button>
+                                    confirmCancelId === t._id ? (
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-red-400 text-xs font-medium">Confirm cancel?</span>
+                                            <button
+                                                onClick={() => cancel(t._id)}
+                                                className="bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition-colors"
+                                            >Yes</button>
+                                            <button
+                                                onClick={() => setConfirmCancelId(null)}
+                                                className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-2.5 py-1 rounded-lg text-xs transition-colors"
+                                            >No</button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setConfirmCancelId(t._id)}
+                                            className="flex items-center gap-1.5 bg-red-600/10 hover:bg-red-600/30 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                        >
+                                            <XCircle size={13} /> Cancel
+                                        </button>
+                                    )
                                 )}
                             </div>
+
                         </div>
                     </div>
                 ))}

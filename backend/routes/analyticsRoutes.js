@@ -166,5 +166,93 @@ router.get("/profit-trend", authMiddleware, async (req, res) => {
     }
 });
 
+// GET Driver-specific stats (for the logged-in driver's personal dashboard)
+router.get("/driver-stats", authMiddleware, async (req, res) => {
+    try {
+        const driver = await Driver.findOne({ userId: req.user.id });
+        if (!driver) return res.status(404).json({ message: "Driver profile not found" });
+
+        const [total, completed, active, cancelled, earningsAgg] = await Promise.all([
+            Trip.countDocuments({ driverId: driver._id }),
+            Trip.countDocuments({ driverId: driver._id, status: "Completed" }),
+            Trip.countDocuments({ driverId: driver._id, status: { $in: ["Draft", "Dispatched"] } }),
+            Trip.countDocuments({ driverId: driver._id, status: "Cancelled" }),
+            Trip.aggregate([
+                { $match: { driverId: driver._id, status: "Completed" } },
+                { $group: { _id: null, total: { $sum: "$revenue" } } },
+            ]),
+        ]);
+
+        // Last 7 days trips
+        const days = 7;
+        const weeklyTrips = [];
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const start = new Date(new Date(date).setHours(0, 0, 0, 0));
+            const end = new Date(new Date(date).setHours(23, 59, 59, 999));
+            const dayCount = await Trip.countDocuments({
+                driverId: driver._id,
+                createdAt: { $gte: start, $lte: end },
+            });
+            const dayEarnings = await Trip.aggregate([
+                { $match: { driverId: driver._id, status: "Completed", completedAt: { $gte: start, $lte: end } } },
+                { $group: { _id: null, total: { $sum: "$revenue" } } },
+            ]);
+            weeklyTrips.push({
+                date: start.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
+                trips: dayCount,
+                earnings: dayEarnings[0]?.total || 0,
+            });
+        }
+
+        // Current active trip
+        const activeTrip = await Trip.findOne({ driverId: driver._id, status: { $in: ["Draft", "Dispatched"] } })
+            .populate("vehicleId", "name licensePlate");
+
+        res.json({
+            driver: { name: driver.name, safetyScore: driver.safetyScore, tripCompletionRate: driver.tripCompletionRate, status: driver.status },
+            trips: { total, completed, active, cancelled },
+            totalEarnings: earningsAgg[0]?.total || 0,
+            weeklyTrips,
+            activeTrip,
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// GET Dispatcher dashboard stats
+router.get("/dispatcher-stats", authMiddleware, async (req, res) => {
+    try {
+        const [totalVehicles, availableVehicles, onTripVehicles, inShopVehicles,
+            totalDrivers, onDutyDrivers, draftTrips, dispatchedTrips, completedToday] = await Promise.all([
+                Vehicle.countDocuments(),
+                Vehicle.countDocuments({ status: "Available" }),
+                Vehicle.countDocuments({ status: "On Trip" }),
+                Vehicle.countDocuments({ status: "In Shop" }),
+                Driver.countDocuments(),
+                Driver.countDocuments({ status: "On Duty" }),
+                Trip.countDocuments({ status: "Draft" }),
+                Trip.countDocuments({ status: "Dispatched" }),
+                Trip.countDocuments({ status: "Completed", completedAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) } }),
+            ]);
+
+        const activeTrips = await Trip.find({ status: { $in: ["Draft", "Dispatched"] } })
+            .populate("vehicleId", "name licensePlate")
+            .populate("driverId", "name status")
+            .sort({ createdAt: -1 }).limit(5);
+
+        res.json({
+            vehicles: { total: totalVehicles, available: availableVehicles, onTrip: onTripVehicles, inShop: inShopVehicles },
+            drivers: { total: totalDrivers, onDuty: onDutyDrivers },
+            trips: { draft: draftTrips, dispatched: dispatchedTrips, completedToday },
+            activeTrips,
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;
 
