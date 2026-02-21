@@ -4,9 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Zap, Truck, UserPlus, LogIn, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import api from '../api';
-
-const ROLES = ['Manager', 'Dispatcher', 'Driver'];
-
+const ROLES = ['Manager', 'Dispatcher', 'Driver', 'Safety Officer', 'Financial Analyst'];
 export default function Login() {
     const [tab, setTab] = useState('login');
     const [loading, setLoading] = useState(false);
@@ -147,7 +145,8 @@ export default function Login() {
                                 <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl p-3.5 space-y-1.5">
                                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Demo Accounts</p>
                                     {[
-                                        { label: 'Manager', email: 'manager@fleetflow.com', pwd: 'manager123', color: 'text-purple-400' },
+                                        { label: 'Admin', email: 'admin@fleetflow.com', pwd: 'admin', color: 'text-amber-400' },
+                                        { label: 'Manager', email: 'nakshatragautam34@gmai.com', pwd: '123456', color: 'text-purple-400' },
                                         { label: 'Dispatcher', email: 'dispatcher@fleetflow.com', pwd: 'dispatch123', color: 'text-blue-400' },
                                         { label: 'Driver', email: 'driver@fleetflow.com', pwd: 'driver123', color: 'text-green-400' },
                                     ].map(acc => (

@@ -12,7 +12,7 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
         const [totalVehicles, availableVehicles, onTripVehicles, inShopVehicles,
             totalDrivers, onDutyDrivers,
             pendingTrips, completedTrips, totalTrips,
-            totalFuelCost, totalMaintenanceCost] = await Promise.all([
+            totalFuelCost, totalMaintenanceCost, totalDriverPay] = await Promise.all([
                 Vehicle.countDocuments(),
                 Vehicle.countDocuments({ status: "Available" }),
                 Vehicle.countDocuments({ status: "On Trip" }),
@@ -22,8 +22,9 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
                 Trip.countDocuments({ status: { $in: ["Draft", "Dispatched"] } }),
                 Trip.countDocuments({ status: "Completed" }),
                 Trip.countDocuments(),
-                FuelLog.aggregate([{ $group: { _id: null, total: { $sum: "$fuelCost" } } }]),
+                FuelLog.aggregate([{ $group: { _id: null, total: { $sum: "$totalCost" } } }]),
                 MaintenanceLog.aggregate([{ $group: { _id: null, total: { $sum: "$cost" } } }]),
+                Trip.aggregate([{ $match: { status: "Completed" } }, { $group: { _id: null, total: { $sum: "$driverPay" } } }]),
             ]);
 
         const utilizationRate = totalVehicles > 0
@@ -37,6 +38,7 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
             finances: {
                 totalFuelCost: totalFuelCost[0]?.total || 0,
                 totalMaintenanceCost: totalMaintenanceCost[0]?.total || 0,
+                totalDriverPay: totalDriverPay[0]?.total || 0,
             },
             utilizationRate,
         });
@@ -136,7 +138,7 @@ router.get("/profit-trend", authMiddleware, async (req, res) => {
             const start = new Date(new Date(date).setHours(0, 0, 0, 0));
             const end = new Date(new Date(date).setHours(23, 59, 59, 999));
 
-            const [revenueAgg, fuelAgg, maintAgg] = await Promise.all([
+            const [revenueAgg, fuelAgg, maintAgg, driverPayAgg] = await Promise.all([
                 Trip.aggregate([
                     { $match: { status: "Completed", completedAt: { $gte: start, $lte: end } } },
                     { $group: { _id: null, total: { $sum: "$revenue" } } },
@@ -149,10 +151,14 @@ router.get("/profit-trend", authMiddleware, async (req, res) => {
                     { $match: { date: { $gte: start, $lte: end } } },
                     { $group: { _id: null, total: { $sum: "$cost" } } },
                 ]),
+                Trip.aggregate([
+                    { $match: { status: "Completed", completedAt: { $gte: start, $lte: end } } },
+                    { $group: { _id: null, total: { $sum: "$driverPay" } } },
+                ]),
             ]);
 
             const revenue = revenueAgg[0]?.total || 0;
-            const expenses = (fuelAgg[0]?.total || 0) + (maintAgg[0]?.total || 0);
+            const expenses = (fuelAgg[0]?.total || 0) + (maintAgg[0]?.total || 0) + (driverPayAgg[0]?.total || 0);
             result.push({
                 date: start.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
                 revenue,
@@ -179,7 +185,7 @@ router.get("/driver-stats", authMiddleware, async (req, res) => {
             Trip.countDocuments({ driverId: driver._id, status: "Cancelled" }),
             Trip.aggregate([
                 { $match: { driverId: driver._id, status: "Completed" } },
-                { $group: { _id: null, total: { $sum: "$revenue" } } },
+                { $group: { _id: null, total: { $sum: "$driverPay" } } },
             ]),
         ]);
 
@@ -197,7 +203,7 @@ router.get("/driver-stats", authMiddleware, async (req, res) => {
             });
             const dayEarnings = await Trip.aggregate([
                 { $match: { driverId: driver._id, status: "Completed", completedAt: { $gte: start, $lte: end } } },
-                { $group: { _id: null, total: { $sum: "$revenue" } } },
+                { $group: { _id: null, total: { $sum: "$driverPay" } } },
             ]);
             weeklyTrips.push({
                 date: start.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),

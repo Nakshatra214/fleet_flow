@@ -60,6 +60,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
         const { vehicleId, driverId } = req.body;
         const cargoWeight = Number(req.body.cargoWeight);
+        const driverPay = Number(req.body.driverPay) || 0;
 
         if (!vehicleId || !driverId || isNaN(cargoWeight)) {
             return res.status(400).json({ message: "vehicleId, driverId, and cargoWeight are required" });
@@ -84,7 +85,7 @@ router.post("/", authMiddleware, async (req, res) => {
             });
         }
 
-        const trip = new Trip({ ...req.body, cargoWeight });
+        const trip = new Trip({ ...req.body, cargoWeight, driverPay });
         await trip.save();
 
         vehicle.status = "On Trip";
@@ -145,6 +146,11 @@ router.put("/:id", authMiddleware, async (req, res) => {
         }
 
         if (newStatus === "Dispatched") {
+            // Role check: Only Manager/Dispatcher can dispatch
+            if (req.user.role === "Driver") {
+                return res.status(403).json({ message: "Drivers cannot dispatch trips" });
+            }
+
             // ✉️ Notify driver trip is dispatched
             if (trip.driverId) {
                 await notifyDriver(
@@ -158,6 +164,11 @@ router.put("/:id", authMiddleware, async (req, res) => {
         }
 
         if (newStatus === "Completed") {
+            // Role check: Only Driver can complete
+            if (req.user.role !== "Driver") {
+                return res.status(403).json({ message: "Only the assigned driver can mark a trip as Completed" });
+            }
+
             updateBody.completedAt = new Date();
 
             if (trip.vehicleId) {
@@ -180,6 +191,21 @@ router.put("/:id", authMiddleware, async (req, res) => {
                     `Great work! Trip from ${trip.origin} to ${trip.destination} has been completed.`,
                     trip._id
                 );
+
+                // Notify Managers and Dispatchers
+                try {
+                    const authUsers = await User.find({ role: { $in: ["Manager", "Dispatcher"] }, status: "active" });
+                    const popTrip = await Trip.findById(trip._id).populate("driverId", "name");
+                    for (const u of authUsers) {
+                        await Notification.create({
+                            userId: u._id,
+                            type: "trip_completed",
+                            title: "✅ Trip Completed",
+                            message: `Driver ${popTrip?.driverId?.name || "Unknown"} completed the trip from ${trip.origin} to ${trip.destination}.`,
+                            tripId: trip._id,
+                        });
+                    }
+                } catch (e) { console.error("Manager notify error on complete", e); }
             }
         }
 

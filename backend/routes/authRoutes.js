@@ -15,9 +15,12 @@ router.post("/register", async (req, res) => {
         const existing = await User.findOne({ email: email.toLowerCase() });
         if (existing) return res.status(400).json({ message: "An account with this email already exists" });
 
-        // Managers auto-approved (first manager), everyone else is pending
-        const isFirstManager = role === "Manager" && (await User.countDocuments({ role: "Manager" })) === 0;
-        const userStatus = isFirstManager ? "active" : (role === "Manager" ? "pending" : "pending");
+        // Admins auto-approved (first admin)
+        // Drivers, Dispatchers, Safety Officers, Financial Analysts auto-approved
+        // Managers need Admin approval
+        const isFirstAdmin = role === "Admin" && (await User.countDocuments({ role: "Admin" })) === 0;
+        const needsApproval = role === "Manager";
+        const userStatus = (isFirstAdmin || !needsApproval) ? "active" : "pending";
 
         const user = new User({ name, email, password, role: role || "Dispatcher", status: userStatus });
         await user.save();
@@ -34,21 +37,25 @@ router.post("/register", async (req, res) => {
             });
         }
 
-        // Notify ALL active managers about the new signup request
-        const managers = await User.find({ role: "Manager", status: "active" });
-        for (const mgr of managers) {
-            await Notification.create({
-                userId: mgr._id,
-                type: "general",
-                title: `🔔 New ${role || "Dispatcher"} Registration`,
-                message: `${name} (${email}) has requested a ${role || "Dispatcher"} account. Review and approve in your dashboard.`,
-            });
+        // Notify Admin only if a Manager signed up (needing approval)
+        if (needsApproval) {
+            const admins = await User.find({ role: "Admin", status: "active" });
+            for (const admin of admins) {
+                await Notification.create({
+                    userId: admin._id,
+                    type: "general",
+                    title: `🔔 New Manager Registration`,
+                    message: `${name} (${email}) has requested Manager access. Review in your Admin Dashboard.`,
+                });
+            }
         }
 
         res.status(201).json({
-            message: isFirstManager
-                ? "Manager account created! Please sign in."
-                : `Account request sent! A manager will review and approve your access soon.`,
+            message: isFirstAdmin
+                ? "Admin account created! Please sign in."
+                : needsApproval
+                    ? `Account request sent! An Admin will review and approve your Manager access soon.`
+                    : `Account created successfully! You can now sign in.`,
             status: user.status,
         });
     } catch (err) {
@@ -87,10 +94,10 @@ router.post("/login", async (req, res) => {
     }
 });
 
-// GET all pending users (Manager only)
+// GET all pending users (Admin only)
 router.get("/pending-users", authMiddleware, async (req, res) => {
     try {
-        if (req.user.role !== "Manager") return res.status(403).json({ message: "Manager only" });
+        if (req.user.role !== "Admin") return res.status(403).json({ message: "Admin only" });
         const pending = await User.find({ status: "pending" }).select("-password").sort({ createdAt: -1 });
         res.json(pending);
     } catch (err) {
@@ -98,10 +105,10 @@ router.get("/pending-users", authMiddleware, async (req, res) => {
     }
 });
 
-// PUT approve user (Manager only)
+// PUT approve user (Admin only)
 router.put("/approve/:id", authMiddleware, async (req, res) => {
     try {
-        if (req.user.role !== "Manager") return res.status(403).json({ message: "Manager only" });
+        if (req.user.role !== "Admin") return res.status(403).json({ message: "Admin only" });
         const user = await User.findByIdAndUpdate(
             req.params.id,
             { status: "active", approvedBy: req.user.id, approvedAt: new Date() },
@@ -114,7 +121,7 @@ router.put("/approve/:id", authMiddleware, async (req, res) => {
             userId: user._id,
             type: "general",
             title: "✅ Account Approved!",
-            message: `Your ${user.role} account has been approved by management. You can now sign in to FleetFlow.`,
+            message: `Your ${user.role} account has been approved by the Admin. You can now sign in to FleetFlow.`,
         });
         res.json({ message: `${user.name} approved successfully`, user });
     } catch (err) {
@@ -122,10 +129,10 @@ router.put("/approve/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// PUT reject user (Manager only)
+// PUT reject user (Admin only)
 router.put("/reject/:id", authMiddleware, async (req, res) => {
     try {
-        if (req.user.role !== "Manager") return res.status(403).json({ message: "Manager only" });
+        if (req.user.role !== "Admin") return res.status(403).json({ message: "Admin only" });
         const user = await User.findByIdAndUpdate(req.params.id, { status: "rejected" }, { new: true }).select("-password");
         if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -133,7 +140,7 @@ router.put("/reject/:id", authMiddleware, async (req, res) => {
             userId: user._id,
             type: "general",
             title: "❌ Account Request Rejected",
-            message: `Your account request has been reviewed and rejected. Contact the fleet manager for more information.`,
+            message: `Your account request has been reviewed and rejected. Contact the Admin for more information.`,
         });
         res.json({ message: `${user.name} rejected`, user });
     } catch (err) {

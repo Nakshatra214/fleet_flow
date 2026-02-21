@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, X, CheckCircle, XCircle, ChevronRight, Package, AlertTriangle } from 'lucide-react';
 import api from '../api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const statusColors = {
     'Draft': 'text-slate-400 bg-slate-400/10 border-slate-400/30',
@@ -19,6 +20,7 @@ function CreateModal({ vehicles, drivers, onClose, onSave }) {
     const [origin, setOrigin] = useState('');
     const [destination, setDestination] = useState('');
     const [revenue, setRevenue] = useState('');
+    const [driverPay, setDriverPay] = useState('');
     const [distanceKm, setDistanceKm] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -46,7 +48,7 @@ function CreateModal({ vehicles, drivers, onClose, onSave }) {
 
         setLoading(true);
         try {
-            await onSave({ vehicleId, driverId, cargoWeight: Number(cargoWeight), origin, destination, revenue: Number(revenue) || 0, distanceKm: Number(distanceKm) || 0, status: 'Draft' });
+            await onSave({ vehicleId, driverId, cargoWeight: Number(cargoWeight), origin, destination, revenue: Number(revenue) || 0, driverPay: Number(driverPay) || 0, distanceKm: Number(distanceKm) || 0, status: 'Draft' });
         } finally {
             setLoading(false);
         }
@@ -118,20 +120,25 @@ function CreateModal({ vehicles, drivers, onClose, onSave }) {
                     </div>
 
                     {/* Cargo / Distance / Revenue */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div>
                             <label className="text-slate-300 text-sm block mb-1.5">Cargo (kg)*</label>
                             <input type="number" value={cargoWeight} onChange={e => setCargoWeight(e.target.value)} min="0" placeholder="0"
                                 className={`w-full bg-slate-900 border ${capacityWarning ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500`} />
                         </div>
                         <div>
-                            <label className="text-slate-300 text-sm block mb-1.5">Distance (km)</label>
+                            <label className="text-slate-300 text-sm block mb-1.5">Dist. (km)</label>
                             <input type="number" value={distanceKm} onChange={e => setDistanceKm(e.target.value)} min="0" placeholder="0"
                                 className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500" />
                         </div>
                         <div>
-                            <label className="text-slate-300 text-sm block mb-1.5">Revenue (₹)</label>
+                            <label className="text-slate-300 text-sm block mb-1.5">Rev. (₹)</label>
                             <input type="number" value={revenue} onChange={e => setRevenue(e.target.value)} min="0" placeholder="0"
+                                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500" />
+                        </div>
+                        <div>
+                            <label className="text-slate-300 text-sm block mb-1.5">Driver Pay (₹)</label>
+                            <input type="number" value={driverPay} onChange={e => setDriverPay(e.target.value)} min="0" placeholder="0"
                                 className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500" />
                         </div>
                     </div>
@@ -170,6 +177,7 @@ function CreateModal({ vehicles, drivers, onClose, onSave }) {
 }
 
 export default function Trips() {
+    const { user } = useAuth();
     const [trips, setTrips] = useState([]);
     const [vehicles, setVehicles] = useState([]);
     const [drivers, setDrivers] = useState([]);
@@ -250,22 +258,31 @@ export default function Trips() {
                                     <span className="font-medium text-slate-300">{t.destination}</span>
                                     <span className="text-slate-600">·</span>
                                     <span className="flex items-center gap-1"><Package size={12} />{t.cargoWeight} kg</span>
-                                    {t.revenue > 0 && <><span className="text-slate-600">·</span><span className="text-green-400 font-medium">₹{t.revenue?.toLocaleString()}</span></>}
+                                    {t.revenue > 0 && user?.role !== 'Driver' && <><span className="text-slate-600">·</span><span className="text-green-400 font-medium">Rev: ₹{t.revenue?.toLocaleString()}</span></>}
+                                    {t.driverPay > 0 && <><span className="text-slate-600">·</span><span className="text-indigo-400 font-medium">Pay: ₹{t.driverPay?.toLocaleString()}</span></>}
                                 </div>
                                 <p className="text-slate-600 text-xs mt-1">
                                     {new Date(t.date || t.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                 </p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
-                                {nextStatus[t.status] && (
+                                {t.status === 'Draft' && user?.role !== 'Driver' && (
                                     <button
                                         onClick={() => advanceStatus(t)}
                                         className="flex items-center gap-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                                     >
-                                        <CheckCircle size={13} /> {nextStatus[t.status]}
+                                        <CheckCircle size={13} /> Dispatch
                                     </button>
                                 )}
-                                {(t.status === 'Draft' || t.status === 'Dispatched') && (
+                                {t.status === 'Dispatched' && user?.role === 'Driver' && (
+                                    <button
+                                        onClick={() => advanceStatus(t)}
+                                        className="flex items-center gap-1.5 bg-green-600/20 hover:bg-green-600/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                    >
+                                        <CheckCircle size={13} /> Complete
+                                    </button>
+                                )}
+                                {(t.status === 'Draft' || t.status === 'Dispatched') && user?.role !== 'Driver' && (
                                     confirmCancelId === t._id ? (
                                         <div className="flex items-center gap-1.5">
                                             <span className="text-red-400 text-xs font-medium">Confirm cancel?</span>

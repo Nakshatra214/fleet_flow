@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["Manager", "Dispatcher", "Driver"], default: "Dispatcher" },
+    role: { type: String, enum: ["Admin", "Manager", "Dispatcher", "Driver", "Safety Officer", "Financial Analyst"], default: "Dispatcher" },
     // Approval system: Manager accounts auto-approved, others need manager approval
     status: { type: String, enum: ["pending", "active", "rejected"], default: "pending" },
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

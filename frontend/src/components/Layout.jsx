@@ -3,25 +3,28 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard, Truck, Users, Route, Wrench,
-    Fuel, BarChart3, LogOut, Menu, X, Zap, ChevronLeft, ChevronRight
+    Fuel, BarChart3, LogOut, Menu, X, Zap, ChevronLeft, ChevronRight, ShieldCheck, TrendingUp
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 
 // Nav config with role access
 const allNavItems = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Manager', 'Dispatcher', 'Driver'] },
-    { to: '/vehicles', label: 'Vehicles', icon: Truck, roles: ['Manager', 'Dispatcher'] },
-    { to: '/drivers', label: 'Drivers', icon: Users, roles: ['Manager', 'Dispatcher'] },
-    { to: '/trips', label: 'Trips', icon: Route, roles: ['Manager', 'Dispatcher', 'Driver'] },
-    { to: '/maintenance', label: 'Maintenance', icon: Wrench, roles: ['Manager', 'Dispatcher'] },
-    { to: '/fuel', label: 'Fuel & Expenses', icon: Fuel, roles: ['Manager', 'Dispatcher'] },
-    { to: '/analytics', label: 'Analytics', icon: BarChart3, roles: ['Manager'] },
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Dispatcher', 'Driver', 'Safety Officer', 'Financial Analyst'] },
+    { to: '/vehicles', label: 'Vehicles', icon: Truck, roles: ['Manager', 'Dispatcher', 'Safety Officer'] },
+    { to: '/drivers', label: 'Drivers', icon: Users, roles: ['Manager', 'Dispatcher', 'Safety Officer'] },
+    { to: '/trips', label: 'Trips', icon: Route, roles: ['Manager', 'Dispatcher', 'Driver', 'Safety Officer'] },
+    { to: '/maintenance', label: 'Maintenance', icon: Wrench, roles: ['Manager', 'Dispatcher', 'Financial Analyst'] },
+    { to: '/fuel', label: 'Fuel & Expenses', icon: Fuel, roles: ['Manager', 'Dispatcher', 'Financial Analyst'] },
+    { to: '/analytics', label: 'Analytics', icon: BarChart3, roles: ['Manager', 'Financial Analyst'] },
 ];
 
 const roleChip = {
+    Admin: 'text-amber-400 bg-amber-400/10 border-amber-400/30',
     Manager: 'text-purple-400 bg-purple-400/10 border-purple-400/30',
     Dispatcher: 'text-blue-400 bg-blue-400/10 border-blue-400/30',
     Driver: 'text-green-400 bg-green-400/10 border-green-400/30',
+    'Safety Officer': 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30',
+    'Financial Analyst': 'text-violet-400 bg-violet-400/10 border-violet-400/30',
 };
 
 export default function Layout() {

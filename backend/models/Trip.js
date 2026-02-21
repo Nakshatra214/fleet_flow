@@ -21,6 +21,7 @@ const tripSchema = new mongoose.Schema({
         default: "Draft",
     },
     revenue: { type: Number, default: 0 }, // for ROI
+    driverPay: { type: Number, default: 0 }, // what the driver earns
     distanceKm: { type: Number, default: 0 },
     date: { type: Date, default: Date.now },
     completedAt: { type: Date },
