@@ -125,4 +125,46 @@ router.get("/trips-trend", authMiddleware, async (req, res) => {
     }
 });
 
+// GET Profit trend — last 30 days (revenue vs expenses)
+router.get("/profit-trend", authMiddleware, async (req, res) => {
+    try {
+        const days = 30;
+        const result = [];
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const start = new Date(new Date(date).setHours(0, 0, 0, 0));
+            const end = new Date(new Date(date).setHours(23, 59, 59, 999));
+
+            const [revenueAgg, fuelAgg, maintAgg] = await Promise.all([
+                Trip.aggregate([
+                    { $match: { status: "Completed", completedAt: { $gte: start, $lte: end } } },
+                    { $group: { _id: null, total: { $sum: "$revenue" } } },
+                ]),
+                FuelLog.aggregate([
+                    { $match: { date: { $gte: start, $lte: end } } },
+                    { $group: { _id: null, total: { $sum: "$totalCost" } } },
+                ]),
+                MaintenanceLog.aggregate([
+                    { $match: { date: { $gte: start, $lte: end } } },
+                    { $group: { _id: null, total: { $sum: "$cost" } } },
+                ]),
+            ]);
+
+            const revenue = revenueAgg[0]?.total || 0;
+            const expenses = (fuelAgg[0]?.total || 0) + (maintAgg[0]?.total || 0);
+            result.push({
+                date: start.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
+                revenue,
+                expenses,
+                profit: revenue - expenses,
+            });
+        }
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;
+
